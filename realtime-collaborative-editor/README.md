@@ -18,8 +18,11 @@ Clone the Repository
 Clone this repository to your local machine:
 
 git clone https://github.com/your-username/project-name.git
+
 cd project-name
+
 Install Dependencies
+
 Install the necessary packages using npm :
 
 npm install
