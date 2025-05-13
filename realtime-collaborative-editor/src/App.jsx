@@ -1,5 +1,4 @@
-
-
+// App.js
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Editor from './components/Editor';
@@ -31,6 +30,3 @@ const App = () => {
 };
 
 export default App;
-
-
-

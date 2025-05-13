@@ -1,73 +1,110 @@
-// src/components/Editor.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 
 const Editor = ({ username }) => {
-  const [editorContent, setEditorContent] = useState('');
+  const editorRef = useRef(null);
+  const [editorContent, setEditorContent] = useState("");
   const [users, setUsers] = useState([]);
+  const [lastEditor, setLastEditor] = useState("");
+  const [isEditable, setIsEditable] = useState(false);
 
   useEffect(() => {
-    // Sync the editor content from localStorage
-    const storedContent = localStorage.getItem('editorContent');
-    const storedUsers = localStorage.getItem('editorUsers');
+    const defaultContent =
+      "Welcome! Click Edit to start modifying this shared content.";
+    const storedContent =
+      localStorage.getItem("editorContent") || defaultContent;
+    const storedUsers = JSON.parse(localStorage.getItem("editorUsers")) || [];
+    const storedLastEditor = localStorage.getItem("editorLastEditor") || "";
 
-    if (storedContent) {
-      setEditorContent(storedContent);
+    setEditorContent(storedContent);
+    setLastEditor(storedLastEditor);
+
+    if (!storedUsers.includes(username)) {
+      const updatedUsers = [...storedUsers, username];
+      localStorage.setItem("editorUsers", JSON.stringify(updatedUsers));
+      setUsers(updatedUsers);
+    } else {
+      setUsers(storedUsers);
     }
 
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    }
-
-    // Listen for changes in localStorage from other tabs
     const handleStorageChange = () => {
-      const updatedContent = localStorage.getItem('editorContent');
-      const updatedUsers = localStorage.getItem('editorUsers');
-      if (updatedContent) {
-        setEditorContent(updatedContent);
-      }
-      if (updatedUsers) {
-        setUsers(JSON.parse(updatedUsers));
-      }
+      const updatedContent =
+        localStorage.getItem("editorContent") || defaultContent;
+      const updatedUsers =
+        JSON.parse(localStorage.getItem("editorUsers")) || [];
+      const updatedLastEditor = localStorage.getItem("editorLastEditor") || "";
+      setEditorContent(updatedContent);
+      setUsers(updatedUsers);
+      setLastEditor(updatedLastEditor);
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [username]);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const handleEditorChange = (e) => {
-    const newContent = e.currentTarget.innerText;
-    setEditorContent(newContent);
-
-    // Update localStorage when the editor content changes
-    localStorage.setItem('editorContent', newContent);
-
-    // Track users and who made the change
-    const updatedUsers = [...users];
-    if (!updatedUsers.includes(username)) {
-      updatedUsers.push(username);
+  useEffect(() => {
+    if (editorRef.current && !isEditable) {
+      editorRef.current.innerText = editorContent;
     }
-    localStorage.setItem('editorUsers', JSON.stringify(updatedUsers));
+  }, [editorContent, isEditable]);
+
+  const handleEditorChange = () => {
+    const newContent = editorRef.current.innerText;
+    setEditorContent(newContent);
+  };
+
+  const handleSave = () => {
+    const newContent = editorRef.current.innerText;
+    localStorage.setItem("editorContent", newContent);
+    localStorage.setItem("editorLastEditor", username);
+    setEditorContent(newContent);
+    setLastEditor(username);
+    setIsEditable(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-800 p-6 flex flex-col items-center">
-      <div className="w-full max-w-3xl bg-white p-4 rounded-lg shadow-lg">
-        <h2 className="text-xl font-bold text-gray-700 mb-2">Collaborative Text Editor</h2>
+      <div className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-bold text-gray-700 mb-4">
+          Collaborative Editor
+        </h2>
+
+        <p className="text-sm text-gray-600 mb-2">
+          <strong>Last Edited By:</strong> {lastEditor || "No edits yet"}
+        </p>
+
         <div
-          className="border p-4 rounded-lg bg-gray-100 text-gray-800 h-96 overflow-y-auto"
-          contentEditable
+          ref={editorRef}
+          className={`border p-4 rounded-lg bg-gray-100 text-gray-800 h-96 overflow-y-auto whitespace-pre-wrap ${
+            isEditable ? "outline outline-blue-500" : ""
+          }`}
+          contentEditable={isEditable}
+          suppressContentEditableWarning
           onInput={handleEditorChange}
-          dangerouslySetInnerHTML={{ __html: editorContent }}
         />
-        <div className="mt-2">
-          <h3 className="font-semibold text-gray-600">Users Currently Editing:</h3>
-          <ul>
-            {users.map((user, index) => (
-              <li key={index} className="text-gray-400">{user}</li>
+
+        <div className="mt-4">
+          {isEditable ? (
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+          ) : (
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setIsEditable(true)}
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        <div className="mt-6">
+          <h3 className="font-semibold text-gray-700">Users Online:</h3>
+          <ul className="list-disc ml-5 mt-1 text-gray-600">
+            {users.map((user, idx) => (
+              <li key={idx}>{user}</li>
             ))}
           </ul>
         </div>

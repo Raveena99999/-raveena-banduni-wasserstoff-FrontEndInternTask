@@ -1,4 +1,4 @@
-
+// pages/LoginPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +10,6 @@ const LoginPage = () => {
     if (username.trim()) {
       localStorage.setItem('username', username);
       navigate('/editor');
-
     }
   };
 
